@@ -17,6 +17,7 @@ import TodosTreinos from "./pages/TodosTreinos";
 import HistoricoTreinos from "./pages/HistoricoTreinos";
 import Biblioteca from "./pages/Biblioteca";
 import Perfil from "./pages/Perfil";
+import Saude from "./pages/Saude";
 import ModelWorkoutDetail from "./pages/ModelWorkoutDetail";
 import Evolucao from "./pages/Evolucao";
 import NotFound from "./pages/NotFound";
@@ -111,6 +112,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Perfil />
+                </ProtectedRoute>
+              }
+            />
+             <Route
+              path="/saude"
+              element={
+                <ProtectedRoute>
+                  <Saude />
                 </ProtectedRoute>
               }
             />

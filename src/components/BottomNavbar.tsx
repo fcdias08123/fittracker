@@ -1,4 +1,4 @@
-import { Home, Dumbbell, Library, User } from "lucide-react";
+import { Home, Dumbbell, Library, Activity, User } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,7 @@ const BottomNavbar = () => {
     { to: "/home", icon: Home, label: "Home", matchPaths: ["/home"] },
     { to: "/treino", icon: Dumbbell, label: "Treino", matchPaths: ["/treino", "/detalhe-treino", "/modelo-treino"] },
     { to: "/biblioteca", icon: Library, label: "Biblioteca", matchPaths: ["/biblioteca"] },
+    { to: "/saude", icon: Activity, label: "Saúde", matchPaths: ["/saude"] },
     { to: "/perfil", icon: User, label: "Perfil", matchPaths: ["/perfil"] },
   ];
 
