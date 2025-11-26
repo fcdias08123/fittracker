@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import BottomNavbar from "@/components/BottomNavbar";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, Circle, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import { startOfWeek, endOfWeek, format, parseISO } from "date-fns";
@@ -132,6 +132,32 @@ const Home = () => {
             Aqui está o resumo da sua semana de treinos.
           </p>
         </div>
+
+        {/* Card de Evolução */}
+        <Card className="p-6 space-y-4 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+          <div className="flex items-start gap-4">
+            <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+              <TrendingUp className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1 space-y-2">
+              <h2 className="text-lg font-semibold text-foreground">
+                Acompanhe sua evolução
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Registre seu peso e suas fotos de progresso para visualizar sua mudança ao longo do tempo.
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="default"
+            size="lg"
+            className="w-full"
+            onClick={() => navigate("/evolucao")}
+          >
+            <TrendingUp className="h-5 w-5 mr-2" />
+            Ver evolução
+          </Button>
+        </Card>
 
         {/* Mensagem se não tiver treinos criados */}
         {!hasWorkouts && (

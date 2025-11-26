@@ -16,8 +16,7 @@ import {
   Activity,
   Droplet,
   Flame,
-  Pizza,
-  TrendingUp
+  Pizza
 } from "lucide-react";
 import BottomNavbar from "@/components/BottomNavbar";
 import { Button } from "@/components/ui/button";
@@ -549,28 +548,6 @@ const Perfil = () => {
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Seção: Sua evolução */}
-        <div>
-          <h2 className="text-lg font-semibold text-foreground mb-3 px-1">
-            Sua evolução
-          </h2>
-          <Card>
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                Acompanhe seu progresso ao longo do tempo registrando seu peso e evolução.
-              </p>
-              <Button 
-                onClick={() => navigate("/evolucao")} 
-                size="lg" 
-                className="w-full"
-              >
-                <TrendingUp className="h-5 w-5 mr-2" />
-                Ver evolução
-              </Button>
             </CardContent>
           </Card>
         </div>
