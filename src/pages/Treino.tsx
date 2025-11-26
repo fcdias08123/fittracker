@@ -40,9 +40,8 @@ type Profile = {
 
 const Treino = () => {
   const navigate = useNavigate();
-  const [todayWorkout, setTodayWorkout] = useState<TodayWorkout | null>(null);
+  const [todayWorkouts, setTodayWorkouts] = useState<TodayWorkout[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [userWorkoutsCount, setUserWorkoutsCount] = useState<number>(0);
   const [recommendedWorkout, setRecommendedWorkout] = useState<ModelWorkout | null>(null);
   const [isLoadingRecommendation, setIsLoadingRecommendation] = useState(false);
 
@@ -84,88 +83,78 @@ const Treino = () => {
 
       const currentDay = getDiaSemanaAtualSlug();
 
-      // Buscar todos os treinos do usuário para contar
-      const { data: allWorkouts, error: countError } = await supabase
-        .from("workouts")
-        .select("id")
-        .eq("user_id", userData.user.id);
-
-      if (!countError && allWorkouts) {
-        setUserWorkoutsCount(allWorkouts.length);
-      }
-
-      // Buscar treino do dia
+      // Buscar todos os treinos do dia (sem limite)
       const { data: workouts, error: workoutError } = await supabase
         .from("workouts")
         .select("*")
         .eq("user_id", userData.user.id)
         .contains("dias_semana", [currentDay])
-        .order("created_at", { ascending: true })
-        .limit(1);
+        .order("created_at", { ascending: true });
 
       if (workoutError) {
         toast({
           title: "Erro",
-          description: "Erro ao buscar treino de hoje.",
+          description: "Erro ao buscar treinos de hoje.",
           variant: "destructive",
         });
-        setTodayWorkout(null);
+        setTodayWorkouts([]);
         return;
       }
 
       if (!workouts || workouts.length === 0) {
-        setTodayWorkout(null);
+        setTodayWorkouts([]);
         return;
       }
 
-      const workout = workouts[0];
-
-      // Buscar exercícios do treino
-      const { data: workoutExercises, error: exercisesError } = await supabase
-        .from("workout_exercises")
-        .select("*")
-        .eq("workout_id", workout.id)
-        .order("ordem", { ascending: true });
-
-      if (exercisesError) {
-        toast({
-          title: "Erro",
-          description: "Erro ao buscar exercícios do treino.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Buscar detalhes dos exercícios
-      const exercisesWithDetails = await Promise.all(
-        workoutExercises.map(async (we) => {
-          const { data: exerciseData } = await supabase
-            .from("exercises")
+      // Processar cada treino e buscar seus exercícios
+      const workoutsWithExercises = await Promise.all(
+        workouts.map(async (workout) => {
+          // Buscar exercícios do treino
+          const { data: workoutExercises, error: exercisesError } = await supabase
+            .from("workout_exercises")
             .select("*")
-            .eq("id", we.exercise_id)
-            .single();
+          
+          if (exercisesError) {
+            console.error("Erro ao buscar exercícios:", exercisesError);
+            return null;
+          }
+
+          // Buscar detalhes dos exercícios
+          const exercisesWithDetails = await Promise.all(
+            workoutExercises.map(async (we) => {
+              const { data: exerciseData } = await supabase
+                .from("exercises")
+                .select("*")
+                .eq("id", we.exercise_id)
+                .single();
+
+              return {
+                id: we.id,
+                series: we.series,
+                repeticoes: we.repeticoes,
+                exercise: exerciseData as Exercise,
+              };
+            })
+          );
 
           return {
-            id: we.id,
-            series: we.series,
-            repeticoes: we.repeticoes,
-            exercise: exerciseData as Exercise,
+            id: workout.id,
+            name: workout.nome,
+            exercises: exercisesWithDetails as WorkoutExercise[],
           };
         })
       );
 
-      setTodayWorkout({
-        id: workout.id,
-        name: workout.nome,
-        exercises: exercisesWithDetails as WorkoutExercise[],
-      });
+      // Filtrar treinos nulos (em caso de erro)
+      const validWorkouts = workoutsWithExercises.filter((w): w is TodayWorkout => w !== null);
+      setTodayWorkouts(validWorkouts);
     } catch (error) {
       toast({
         title: "Erro",
-        description: "Erro ao carregar treino de hoje.",
+        description: "Erro ao carregar treinos de hoje.",
         variant: "destructive",
       });
-      setTodayWorkout(null);
+      setTodayWorkouts([]);
     } finally {
       setIsLoading(false);
     }
@@ -266,108 +255,120 @@ const Treino = () => {
           </Button>
         </div>
 
-        {/* Today's Workout Section */}
+        {/* Recommended Workout Section - Always visible */}
         <div className="space-y-3">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Treino de hoje</h2>
-            <p className="text-sm text-muted-foreground">{getCurrentDate()}</p>
-            <p className="text-xs text-muted-foreground mt-1">Dia atual detectado: {getDiaSemanaAtualSlug()}</p>
+            <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Sugestão de Treino
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Treino recomendado com base no seu perfil
+            </p>
           </div>
 
-          {isLoading ? (
-            <Skeleton className="h-48 w-full" />
-          ) : todayWorkout ? (
-            <Card
-              className="cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => navigate(`/detalhe-treino/${todayWorkout.id}`)}
-            >
+          {isLoadingRecommendation ? (
+            <Skeleton className="h-64 w-full" />
+          ) : recommendedWorkout ? (
+            <Card className="border-primary/20 bg-gradient-to-br from-background to-primary/5">
               <CardHeader>
-                <CardTitle className="text-lg">{todayWorkout.name}</CardTitle>
+                <CardTitle className="text-lg">
+                  {recommendedWorkout.titulo}
+                </CardTitle>
+                {recommendedWorkout.descricao_curta && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {recommendedWorkout.descricao_curta}
+                  </p>
+                )}
               </CardHeader>
-              <CardContent className="space-y-2">
-                <ul className="space-y-2">
-                  {todayWorkout.exercises.map((item) => (
-                    <li key={item.id} className="text-foreground flex items-start">
-                      <span className="text-primary mr-2">•</span>
-                      <span>
-                        {item.exercise.nome} – {item.series}x{item.repeticoes}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="text-sm text-muted-foreground mt-4">
-                  Este é o treino planejado para hoje.
-                </p>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <Target className="h-3 w-3" />
+                    {getObjetivoLabel(recommendedWorkout.objetivo)}
+                  </Badge>
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <Award className="h-3 w-3" />
+                    {getNivelLabel(recommendedWorkout.nivel)}
+                  </Badge>
+                  {recommendedWorkout.dias_semana_sugeridos && (
+                    <Badge variant="secondary" className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {recommendedWorkout.dias_semana_sugeridos}x por semana
+                    </Badge>
+                  )}
+                </div>
+
+                <Button
+                  onClick={() => navigate(`/modelo-treino/${recommendedWorkout.id}`)}
+                  className="w-full"
+                >
+                  Ver treino sugerido
+                </Button>
               </CardContent>
             </Card>
           ) : (
             <Card>
-              <CardContent className="pt-6">
-                <p className="text-muted-foreground text-center">
-                  Você ainda não tem treino planejado para hoje.
+               <CardContent className="pt-6 pb-6">
+                <p className="text-sm text-muted-foreground text-center">
+                  Complete seu perfil para receber sugestões personalizadas
                 </p>
               </CardContent>
             </Card>
           )}
         </div>
 
-        {/* Recommended Workout Section - Only show if user has no workouts */}
-        {userWorkoutsCount === 0 && (
-          <div className="space-y-3">
-            <div>
-              <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                Treino sugerido para você
-              </h2>
-            </div>
-
-            {isLoadingRecommendation ? (
-              <Skeleton className="h-64 w-full" />
-            ) : recommendedWorkout ? (
-              <Card className="border-primary/20 bg-gradient-to-br from-background to-primary/5">
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    {recommendedWorkout.titulo}
-                  </CardTitle>
-                  {recommendedWorkout.descricao_curta && (
-                    <p className="text-sm text-muted-foreground mt-2">
-                      {recommendedWorkout.descricao_curta}
-                    </p>
-                  )}
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="flex items-center gap-1">
-                      <Target className="h-3 w-3" />
-                      {getObjetivoLabel(recommendedWorkout.objetivo)}
-                    </Badge>
-                    <Badge variant="secondary" className="flex items-center gap-1">
-                      <Award className="h-3 w-3" />
-                      {getNivelLabel(recommendedWorkout.nivel)}
-                    </Badge>
-                    {recommendedWorkout.dias_semana_sugeridos && (
-                      <Badge variant="secondary" className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {recommendedWorkout.dias_semana_sugeridos}x por semana
-                      </Badge>
-                    )}
-                  </div>
-
-                  <Button
-                    onClick={() => navigate(`/modelo-treino/${recommendedWorkout.id}`)}
-                    className="w-full"
-                  >
-                    Ver treino sugerido
-                  </Button>
-
-                  <p className="text-xs text-muted-foreground text-center">
-                    Recomendado com base no seu perfil
-                  </p>
-                </CardContent>
-              </Card>
-            ) : null}
+        {/* Today's Workout Section */}
+        <div className="space-y-3">
+          <div>
+            <h2 className="text-xl font-semibold text-foreground">Treino de hoje</h2>
+            <p className="text-sm text-muted-foreground">{getCurrentDate()}</p>
           </div>
-        )}
+
+            {isLoading ? (
+            <Skeleton className="h-48 w-full" />
+          ) : todayWorkouts.length > 0 ? (
+            <div className="space-y-3">
+              {todayWorkouts.map((workout) => (
+                <Card
+                  key={workout.id}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  onClick={() => navigate(`/detalhe-treino/${workout.id}`)}
+                >
+                  <CardHeader>
+                    <CardTitle className="text-lg">{workout.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <ul className="space-y-2">
+                      {workout.exercises.map((item) => (
+                        <li key={item.id} className="text-foreground flex items-start">
+                          <span className="text-primary mr-2">•</span>
+                          <span>
+                            {item.exercise.nome} – {item.series}x{item.repeticoes}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="text-sm text-muted-foreground mt-4">
+                      Clique para ver detalhes e iniciar
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="pt-6 pb-6">
+                <p className="text-muted-foreground text-center">
+                  Você ainda não tem treino planejado para hoje.
+                </p>
+                <p className="text-sm text-muted-foreground text-center mt-2">
+                  Monte um treino ou veja a sugestão acima.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
       <BottomNavbar />
     </div>
