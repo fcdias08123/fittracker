@@ -14,7 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useNavigate } from "react-router-dom";
-import { Pencil, Trash2, Calendar, Dumbbell } from "lucide-react";
+import { Pencil, Trash2, Calendar, Dumbbell, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -181,6 +181,7 @@ const TodosTreinos = () => {
               Você ainda não criou nenhum treino.
             </p>
             <Button onClick={() => navigate("/montar-treino")}>
+              <Plus className="h-4 w-4 mr-2" />
               Montar primeiro treino
             </Button>
           </div>

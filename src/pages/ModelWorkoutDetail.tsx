@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import BackButton from "@/components/BackButton";
-import { Target, Award, Calendar, Plus } from "lucide-react";
+import { Target, Award, Calendar } from "lucide-react";
 
 type Exercise = {
   nome: string;
@@ -418,7 +418,6 @@ const ModelWorkoutDetail = () => {
             className="w-full h-12 text-base font-semibold"
             size="lg"
           >
-            <Plus className="mr-2 h-5 w-5" />
             {isImporting ? "Importando..." : "Usar este treino"}
           </Button>
         </div>

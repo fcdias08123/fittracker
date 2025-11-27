@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Dumbbell } from "lucide-react";
+import { Dumbbell, Check } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import BottomNavbar from "@/components/BottomNavbar";
@@ -334,7 +334,7 @@ const DetalheTreino = () => {
             size="lg"
             variant="secondary"
           >
-            Treino já finalizado hoje
+            Treino já concluído hoje
           </Button>
         ) : (
           <Button
@@ -342,7 +342,8 @@ const DetalheTreino = () => {
             className="w-full h-12 text-base"
             size="lg"
           >
-            Finalizar treino
+            <Check className="h-5 w-5 mr-2" />
+            Concluir treino
           </Button>
         )}
       </div>
@@ -351,7 +352,7 @@ const DetalheTreino = () => {
       <AlertDialog open={showFinishDialog} onOpenChange={setShowFinishDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Finalizar treino</AlertDialogTitle>
+            <AlertDialogTitle>Concluir treino</AlertDialogTitle>
             <AlertDialogDescription>
               Você concluiu este treino hoje? Ele será salvo no seu histórico.
             </AlertDialogDescription>
@@ -363,7 +364,7 @@ const DetalheTreino = () => {
               disabled={isFinishing}
               className="bg-green-600 hover:bg-green-700"
             >
-              {isFinishing ? "Finalizando..." : "Finalizar"}
+              {isFinishing ? "Concluindo..." : "Concluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

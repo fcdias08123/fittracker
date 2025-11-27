@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles, Target, Award, Calendar } from "lucide-react";
+import { Sparkles, Target, Award, Calendar, Plus } from "lucide-react";
 import { recommendModelWorkout } from "@/utils/workoutRecommendation";
 import { Database } from "@/integrations/supabase/types";
 
@@ -235,6 +235,7 @@ const Treino = () => {
             className="w-full h-12 text-base"
             size="lg"
           >
+            <Plus className="h-5 w-5 mr-2" />
             Montar treino
           </Button>
           <Button

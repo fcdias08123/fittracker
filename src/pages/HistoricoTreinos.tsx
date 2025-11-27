@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatarDataPtBr } from "@/lib/dateUtils";
+import { Plus } from "lucide-react";
 
 type HistoryItem = {
   id: string;
@@ -128,6 +129,7 @@ const HistoricoTreinos = () => {
               Você ainda não concluiu nenhum treino.
             </p>
             <Button onClick={() => navigate("/montar-treino")}>
+              <Plus className="h-4 w-4 mr-2" />
               Começar agora
             </Button>
           </div>
