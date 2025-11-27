@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import BottomNavbar from "@/components/BottomNavbar";
+import BackButton from "@/components/BackButton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -106,6 +107,7 @@ const HistoricoTreinos = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-lg mx-auto px-4 py-6">
+        <BackButton />
         <h1 className="text-3xl font-bold text-foreground mb-2">
           Histórico de treinos
         </h1>

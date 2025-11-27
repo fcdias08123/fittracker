@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { TrendingUp, Save, X, Camera, Trash2, Image as ImageIcon, Pencil } from "lucide-react";
 import BottomNavbar from "@/components/BottomNavbar";
+import BackButton from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -390,6 +391,7 @@ const Evolucao = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
+        <BackButton />
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold text-foreground flex items-center justify-center gap-2">

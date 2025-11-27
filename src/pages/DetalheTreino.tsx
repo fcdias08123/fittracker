@@ -4,10 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { ArrowLeft, Dumbbell } from "lucide-react";
+import { Dumbbell } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import BottomNavbar from "@/components/BottomNavbar";
+import BackButton from "@/components/BackButton";
 import { getDataHojeLocalISODate, formatarDataPtBr } from "@/lib/dateUtils";
 
 type Exercise = {
@@ -259,15 +260,7 @@ const DetalheTreino = () => {
       <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
         {/* Header */}
         <div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/treino")}
-            className="mb-4 -ml-2"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
+          <BackButton />
           <h1 className="text-3xl font-bold text-foreground">{workout.nome}</h1>
           <p className="text-muted-foreground mt-1">
             Dias: {workout.dias_semana.join(", ")}

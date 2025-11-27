@@ -1,5 +1,6 @@
 import { useState } from "react";
 import BottomNavbar from "@/components/BottomNavbar";
+import BackButton from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -122,6 +123,7 @@ const TodosTreinos = () => {
       <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
         {/* Header */}
         <div>
+          <BackButton />
           <h1 className="text-3xl font-bold text-foreground">Todos os treinos</h1>
           <p className="text-muted-foreground mt-1">
             Gerencie os treinos que você já criou.

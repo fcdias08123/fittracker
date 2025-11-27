@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import BottomNavbar from "@/components/BottomNavbar";
+import BackButton from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -380,6 +381,7 @@ const MontarTreino = () => {
       <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
         {/* Header */}
         <div>
+          <BackButton />
           <h1 className="text-3xl font-bold text-foreground">
             {isEditMode ? "Editar treino" : "Montar treino"}
           </h1>

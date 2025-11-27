@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Target, Award, Calendar, Plus } from "lucide-react";
+import BackButton from "@/components/BackButton";
+import { Target, Award, Calendar, Plus } from "lucide-react";
 
 type Exercise = {
   nome: string;
@@ -372,15 +373,7 @@ const ModelWorkoutDetail = () => {
       <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
         {/* Header */}
         <div className="space-y-4">
-          <Button
-            variant="outline"
-            onClick={() => navigate(-1)}
-            className="border-primary text-primary hover:bg-primary/10 rounded-full px-4"
-            size="sm"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
+          <BackButton />
 
           <div>
             <h1 className="text-2xl font-bold text-foreground">
