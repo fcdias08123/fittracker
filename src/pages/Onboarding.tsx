@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -26,6 +27,8 @@ const Onboarding = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [showConflictDialog, setShowConflictDialog] = useState(false);
+  const [conflictingObjective, setConflictingObjective] = useState<string | null>(null);
   const [data, setData] = useState<OnboardingData>({
     nome: "",
     objectives: [],
@@ -54,12 +57,72 @@ const Onboarding = () => {
   const daysOptions = [1, 2, 3, 4, 5, 6, 7];
 
   const toggleObjective = (objectiveId: string) => {
+    // Definir objetivos conflitantes
+    const conflictingPairs = [
+      { a: "muscle", b: "lose-weight" },
+    ];
+
+    // Se está desmarcando, permitir
+    if (data.objectives.includes(objectiveId)) {
+      setData((prev) => ({
+        ...prev,
+        objectives: prev.objectives.filter((id) => id !== objectiveId),
+      }));
+      return;
+    }
+
+    // Verificar se há conflito com objetivos já selecionados
+    const hasConflict = conflictingPairs.some((pair) => {
+      const isSelectingA = objectiveId === pair.a;
+      const isSelectingB = objectiveId === pair.b;
+      const hasA = data.objectives.includes(pair.a);
+      const hasB = data.objectives.includes(pair.b);
+
+      return (isSelectingA && hasB) || (isSelectingB && hasA);
+    });
+
+    if (hasConflict) {
+      setConflictingObjective(objectiveId);
+      setShowConflictDialog(true);
+      return;
+    }
+
+    // Se não há conflito, adicionar normalmente
     setData((prev) => ({
       ...prev,
-      objectives: prev.objectives.includes(objectiveId)
-        ? prev.objectives.filter((id) => id !== objectiveId)
-        : [...prev.objectives, objectiveId],
+      objectives: [...prev.objectives, objectiveId],
     }));
+  };
+
+  const handleReplaceObjective = () => {
+    if (!conflictingObjective) return;
+
+    // Remover o objetivo conflitante e adicionar o novo
+    const conflictingPairs = [
+      { a: "muscle", b: "lose-weight" },
+    ];
+
+    const pair = conflictingPairs.find(
+      (p) => p.a === conflictingObjective || p.b === conflictingObjective
+    );
+
+    if (pair) {
+      const toRemove = conflictingObjective === pair.a ? pair.b : pair.a;
+      setData((prev) => ({
+        ...prev,
+        objectives: prev.objectives
+          .filter((id) => id !== toRemove)
+          .concat(conflictingObjective),
+      }));
+    }
+
+    setShowConflictDialog(false);
+    setConflictingObjective(null);
+  };
+
+  const handleCancelConflict = () => {
+    setShowConflictDialog(false);
+    setConflictingObjective(null);
   };
 
   const isStep1Valid = data.nome.trim() !== "" && data.objectives.length > 0;
@@ -213,7 +276,7 @@ const Onboarding = () => {
                 Qual é o seu objetivo?
               </h3>
               <p className="text-secondary text-sm">
-                Você pode selecionar mais de um
+                Você pode selecionar objetivos compatíveis
               </p>
             </div>
 
@@ -449,6 +512,35 @@ const Onboarding = () => {
           </div>
         )}
       </div>
+      {/* Dialog de conflito de objetivos */}
+      <AlertDialog open={showConflictDialog} onOpenChange={setShowConflictDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Combinação complexa</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Ganhar massa muscular e emagrecer simultaneamente exige estratégias 
+                distintas de dieta e treino. Como iniciante, recomendamos escolher um 
+                objetivo principal para obter resultados mais consistentes.
+              </p>
+              <p className="text-sm">
+                Você pode alterar seus objetivos a qualquer momento em Perfil → Saúde.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel onClick={handleCancelConflict}>
+              Voltar e escolher
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleReplaceObjective}
+              className="bg-primary hover:bg-primary/90"
+            >
+              Trocar objetivo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

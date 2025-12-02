@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,6 +59,8 @@ const Saude = () => {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [tempData, setTempData] = useState<UserData>(userData);
   const [isLoading, setIsLoading] = useState(true);
+  const [showConflictDialog, setShowConflictDialog] = useState(false);
+  const [conflictingObjective, setConflictingObjective] = useState<string | null>(null);
 
   const objectivesMap = {
     muscle: "Ganhar massa muscular",
@@ -208,12 +211,72 @@ const Saude = () => {
   };
 
   const toggleObjective = (objectiveId: string) => {
+    // Definir objetivos conflitantes
+    const conflictingPairs = [
+      { a: "muscle", b: "lose-weight" },
+    ];
+
+    // Se está desmarcando, permitir
+    if (tempData.objectives.includes(objectiveId)) {
+      setTempData((prev) => ({
+        ...prev,
+        objectives: prev.objectives.filter((id) => id !== objectiveId),
+      }));
+      return;
+    }
+
+    // Verificar se há conflito com objetivos já selecionados
+    const hasConflict = conflictingPairs.some((pair) => {
+      const isSelectingA = objectiveId === pair.a;
+      const isSelectingB = objectiveId === pair.b;
+      const hasA = tempData.objectives.includes(pair.a);
+      const hasB = tempData.objectives.includes(pair.b);
+
+      return (isSelectingA && hasB) || (isSelectingB && hasA);
+    });
+
+    if (hasConflict) {
+      setConflictingObjective(objectiveId);
+      setShowConflictDialog(true);
+      return;
+    }
+
+    // Se não há conflito, adicionar normalmente
     setTempData((prev) => ({
       ...prev,
-      objectives: prev.objectives.includes(objectiveId)
-        ? prev.objectives.filter((id) => id !== objectiveId)
-        : [...prev.objectives, objectiveId],
+      objectives: [...prev.objectives, objectiveId],
     }));
+  };
+
+  const handleReplaceObjective = () => {
+    if (!conflictingObjective) return;
+
+    // Remover o objetivo conflitante e adicionar o novo
+    const conflictingPairs = [
+      { a: "muscle", b: "lose-weight" },
+    ];
+
+    const pair = conflictingPairs.find(
+      (p) => p.a === conflictingObjective || p.b === conflictingObjective
+    );
+
+    if (pair) {
+      const toRemove = conflictingObjective === pair.a ? pair.b : pair.a;
+      setTempData((prev) => ({
+        ...prev,
+        objectives: prev.objectives
+          .filter((id) => id !== toRemove)
+          .concat(conflictingObjective),
+      }));
+    }
+
+    setShowConflictDialog(false);
+    setConflictingObjective(null);
+  };
+
+  const handleCancelConflict = () => {
+    setShowConflictDialog(false);
+    setConflictingObjective(null);
   };
 
   const renderEditableItem = (
@@ -656,6 +719,36 @@ const Saude = () => {
           </div>
         </div>
       </div>
+      {/* Dialog de conflito de objetivos */}
+      <AlertDialog open={showConflictDialog} onOpenChange={setShowConflictDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Combinação complexa</AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                Ganhar massa muscular e emagrecer simultaneamente exige estratégias 
+                distintas de dieta e treino. Recomendamos escolher um objetivo principal 
+                para obter resultados mais consistentes e claros.
+              </p>
+              <p className="text-sm font-medium text-foreground">
+                Deseja trocar de objetivo ou manter o atual?
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel onClick={handleCancelConflict}>
+              Manter objetivo atual
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleReplaceObjective}
+              className="bg-primary hover:bg-primary/90"
+            >
+              Trocar objetivo
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
       <BottomNavbar />
     </div>
   );
