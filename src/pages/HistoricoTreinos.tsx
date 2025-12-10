@@ -8,7 +8,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatarDataPtBr } from "@/lib/dateUtils";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type HistoryItem = {
   id: string;
@@ -22,6 +32,9 @@ const HistoricoTreinos = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [displayCount, setDisplayCount] = useState(10);
   const [isLoading, setIsLoading] = useState(true);
+  const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
+  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadHistory();
@@ -105,6 +118,65 @@ const HistoricoTreinos = () => {
     });
   };
 
+  const handleDeleteItem = async () => {
+    if (!deleteItemId) return;
+    
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from("workout_history")
+        .delete()
+        .eq("id", deleteItemId);
+
+      if (error) throw error;
+
+      setHistory((prev) => prev.filter((item) => item.id !== deleteItemId));
+      toast({
+        title: "Sucesso",
+        description: "Registro excluído com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o(s) registro(s). Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteItemId(null);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    setIsDeleting(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) return;
+
+      const { error } = await supabase
+        .from("workout_history")
+        .delete()
+        .eq("user_id", userData.user.id);
+
+      if (error) throw error;
+
+      setHistory([]);
+      toast({
+        title: "Sucesso",
+        description: "Todos os registros foram excluídos.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o(s) registro(s). Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteAllDialog(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-lg mx-auto px-4 py-6">
@@ -135,14 +207,38 @@ const HistoricoTreinos = () => {
           </div>
         ) : (
           <>
+          {/* Botão de exclusão em massa */}
+            <div className="mb-4">
+              <Button
+                variant="outline"
+                className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+                onClick={() => setShowDeleteAllDialog(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir todos os registros
+              </Button>
+            </div>
+
             <div className="space-y-3">
               {displayedWorkouts.map((item) => (
                 <Card
                   key={item.id}
-                  className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                  className="p-4 cursor-pointer hover:shadow-md transition-shadow relative"
                   onClick={() => handleWorkoutClick(item.workout_id, item.data_realizado)}
                 >
-                  <h3 className="font-semibold text-foreground mb-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2 h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteItemId(item.id);
+                    }}
+                    aria-label="Excluir registro"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  <h3 className="font-semibold text-foreground mb-1 pr-10">
                     {item.workout_name}
                   </h3>
                   <p className="text-sm text-muted-foreground">
@@ -164,6 +260,50 @@ const HistoricoTreinos = () => {
         )}
       </div>
       <BottomNavbar />
+
+      {/* Modal de confirmação - exclusão individual */}
+      <AlertDialog open={!!deleteItemId} onOpenChange={() => setDeleteItemId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este registro de treino? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteItem}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Excluindo..." : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal de confirmação - exclusão em massa */}
+      <AlertDialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão de todos os registros</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir todos os registros de treino? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAll}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Excluindo..." : "Excluir todos"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
